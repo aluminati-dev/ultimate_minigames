@@ -583,37 +583,85 @@ export default function App() {
     setView("hacking");
 
     try {
-      // Get IP and details from a public API
+      // Get IP and details from public APIs with multiple fallbacks
       let ip = "unknown";
-      let details = {};
-      try {
-        // Using ipwho.is - reliable and no key required for basic usage
-        const ipRes = await fetch("https://ipwho.is/");
-        const data = await ipRes.json();
-        
-        if (data.success) {
-          ip = data.ip || "unknown";
-          details = {
-            city: data.city || "unknown",
-            region: data.region || "unknown",
-            country: data.country || "unknown",
-            org: data.connection?.isp || data.connection?.org || "unknown",
-            latitude: data.latitude || 0,
-            longitude: data.longitude || 0,
-            postal: data.postal || "unknown"
-          };
-        } else {
-          throw new Error(data.message || "IP lookup failed");
-        }
-      } catch (e) {
-        console.warn("Primary IP fetch failed, trying fallback:", e);
+      let details: any = {};
+      
+      const fetchIPDetails = async () => {
+        // Try ipwho.is first
         try {
-          const fallbackRes = await fetch("https://api.ipify.org?format=json");
-          const fallbackData = await fallbackRes.json();
-          ip = fallbackData.ip || "unknown";
-        } catch (innerE) {
-          console.warn("All IP fetches failed:", innerE);
-        }
+          const res = await fetch("https://ipwho.is/");
+          const data = await res.json();
+          if (data.success) {
+            return {
+              ip: data.ip,
+              city: data.city,
+              region: data.region,
+              country: data.country,
+              org: data.connection?.isp || data.connection?.org,
+              latitude: data.latitude,
+              longitude: data.longitude,
+              postal: data.postal
+            };
+          }
+        } catch (e) { console.warn("ipwho.is failed", e); }
+
+        // Try ipapi.co as second option
+        try {
+          const res = await fetch("https://ipapi.co/json/");
+          const data = await res.json();
+          if (!data.error) {
+            return {
+              ip: data.ip,
+              city: data.city,
+              region: data.region,
+              country: data.country_name,
+              org: data.org || data.asn,
+              latitude: data.latitude,
+              longitude: data.longitude,
+              postal: data.postal
+            };
+          }
+        } catch (e) { console.warn("ipapi.co failed", e); }
+
+        // Try freeipapi.com as third option
+        try {
+          const res = await fetch("https://freeipapi.com/api/json");
+          const data = await res.json();
+          return {
+            ip: data.ipAddress,
+            city: data.cityName,
+            region: data.regionName,
+            country: data.countryName,
+            org: data.asName,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            postal: data.zipCode
+          };
+        } catch (e) { console.warn("freeipapi.com failed", e); }
+
+        return null;
+      };
+
+      const data = await fetchIPDetails();
+      if (data) {
+        ip = data.ip || "unknown";
+        details = {
+          city: data.city || "unknown",
+          region: data.region || "unknown",
+          country: data.country || "unknown",
+          org: data.org || "unknown",
+          latitude: data.latitude || 0,
+          longitude: data.longitude || 0,
+          postal: data.postal || "unknown"
+        };
+      } else {
+        // Last resort: just get the IP
+        try {
+          const res = await fetch("https://api.ipify.org?format=json");
+          const data = await res.json();
+          ip = data.ip || "unknown";
+        } catch (e) { console.warn("Final fallback failed", e); }
       }
 
       // Log to Firestore
