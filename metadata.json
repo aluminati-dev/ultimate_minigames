@@ -1,0 +1,5 @@
+{
+  "name": "IP Hacker Prank",
+  "description": "A fun prank app that logs user names and IPs with a hacker-style UI.",
+  "requestFramePermissions": []
+}

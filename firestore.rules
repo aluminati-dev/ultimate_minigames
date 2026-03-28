@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: logs
+    // Fields:
+    //   - name: string (required, 1-100 chars)
+    //   - ip: string (required, 1-50 chars)
+    //   - timestamp: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "contact.myselfab@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidLog(data) {
+      return data.keys().hasAll(['name', 'ip', 'timestamp']) &&
+             data.name is string && data.name.size() >= 0 && data.name.size() <= 200 &&
+             data.ip is string && data.ip.size() >= 0 && data.ip.size() <= 100 &&
+             data.timestamp is timestamp;
+    }
+
+    match /logs/{logId} {
+      // Anyone can create a log (unauthenticated is allowed for the prank)
+      allow create: if isValidLog(request.resource.data);
+      
+      // Only admin can read logs
+      allow read: if isAdmin();
+      
+      // No updates or deletes allowed
+      allow update, delete: if false;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

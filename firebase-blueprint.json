@@ -1,0 +1,31 @@
+{
+  "entities": {
+    "log": {
+      "title": "IP Log",
+      "description": "A log of a user's name and IP address.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name entered by the user."
+        },
+        "ip": {
+          "type": "string",
+          "description": "The IP address of the user."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the log was created."
+        }
+      },
+      "required": ["name", "ip", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/logs/{logId}": {
+      "schema": "log",
+      "description": "Collection of user IP logs."
+    }
+  }
+}
