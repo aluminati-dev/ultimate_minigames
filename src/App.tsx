@@ -572,27 +572,32 @@ export default function App() {
       let ip = "unknown";
       let details = {};
       try {
-        const ipRes = await fetch("https://ipapi.co/json/");
+        // Using ipwho.is - reliable and no key required for basic usage
+        const ipRes = await fetch("https://ipwho.is/");
         const data = await ipRes.json();
-        ip = data.ip || "unknown";
-        details = {
-          city: data.city || "unknown",
-          region: data.region || "unknown",
-          country: data.country_name || "unknown",
-          org: data.org || "unknown",
-          latitude: data.latitude || 0,
-          longitude: data.longitude || 0,
-          postal: data.postal || "unknown"
-        };
+        
+        if (data.success) {
+          ip = data.ip || "unknown";
+          details = {
+            city: data.city || "unknown",
+            region: data.region || "unknown",
+            country: data.country || "unknown",
+            org: data.connection?.isp || data.connection?.org || "unknown",
+            latitude: data.latitude || 0,
+            longitude: data.longitude || 0,
+            postal: data.postal || "unknown"
+          };
+        } else {
+          throw new Error(data.message || "IP lookup failed");
+        }
       } catch (e) {
-        console.warn("Failed to fetch IP details from public API:", e);
-        // Fallback to basic IP if detailed fetch fails
+        console.warn("Primary IP fetch failed, trying fallback:", e);
         try {
-          const basicIpRes = await fetch("https://api.ipify.org?format=json");
-          const basicData = await basicIpRes.json();
-          ip = basicData.ip || "unknown";
+          const fallbackRes = await fetch("https://api.ipify.org?format=json");
+          const fallbackData = await fallbackRes.json();
+          ip = fallbackData.ip || "unknown";
         } catch (innerE) {
-          console.warn("Failed to fetch basic IP:", innerE);
+          console.warn("All IP fetches failed:", innerE);
         }
       }
 
