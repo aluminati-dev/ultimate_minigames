@@ -18,7 +18,7 @@ import {
 } from "firebase/auth";
 import { db, auth } from "./firebase";
 import { motion, AnimatePresence } from "motion/react";
-import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, AlertTriangle, Gamepad2, Star, Trophy, Zap } from "lucide-react";
+import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, AlertTriangle, Gamepad2, Star, Trophy, Zap, Egg } from "lucide-react";
 import { cn } from "./lib/utils";
 
 // --- Types & Constants ---
@@ -149,20 +149,20 @@ const HackerEffect = ({ onComplete }: { onComplete: () => void }) => {
       } else {
         clearInterval(lineInterval);
       }
-    }, 400);
+    }, 150);
 
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(progressInterval);
-          setTimeout(onComplete, 800);
+          setTimeout(onComplete, 500);
           return 100;
         }
-        // Random increment for a more "realistic" feel
-        const inc = Math.random() > 0.8 ? 5 : 1;
+        // Faster random increment
+        const inc = Math.random() > 0.7 ? 8 : 2;
         return Math.min(prev + inc, 100);
       });
-    }, 100);
+    }, 60);
 
     return () => {
       clearInterval(lineInterval);
@@ -314,6 +314,7 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
                       <th className="px-6 py-4 font-semibold">IP Address</th>
                       <th className="px-6 py-4 font-semibold">Location</th>
                       <th className="px-6 py-4 font-semibold">ISP / Org</th>
+                      <th className="px-6 py-4 font-semibold">Map</th>
                       <th className="px-6 py-4 font-semibold">Timestamp</th>
                     </tr>
                   </thead>
@@ -354,6 +355,20 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
                           <span className="text-xs text-zinc-400 truncate max-w-[150px] block" title={log.org}>
                             {log.org || "Unknown"}
                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {log.latitude && log.longitude ? (
+                            <a 
+                              href={`https://www.google.com/maps?q=${log.latitude},${log.longitude}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 transition-colors"
+                            >
+                              View Map
+                            </a>
+                          ) : (
+                            <span className="text-xs text-zinc-600">N/A</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-xs text-zinc-500">
@@ -496,9 +511,9 @@ const SuccessScreen = ({ name }: { name: string }) => {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", damping: 12 }}
-        className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-black mb-8 shadow-[0_0_50px_rgba(34,197,94,0.5)]"
+        className="w-24 h-24 bg-zinc-900 rounded-full flex items-center justify-center text-5xl mb-8 shadow-[0_0_30px_rgba(255,255,255,0.05)] border border-zinc-800"
       >
-        <Ghost size={48} />
+        🥔
       </motion.div>
       <motion.h1 
         initial={{ opacity: 0, y: 20 }}
