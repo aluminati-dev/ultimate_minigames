@@ -1,20 +1,54 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# System Breach Prank App
 
-# Run and deploy your AI Studio app
+A full-stack "hacker" prank application built with React, Express, and Firebase.
 
-This contains everything you need to run your app locally.
+## 🚀 Features
+- **Minigame:** A fast-paced "Mega Play" button-clicking game.
+- **Hacker Interface:** Immersive CRT-style terminal effect with realistic system breach logs.
+- **IP Logging:** Automatically captures and logs user IP addresses to Firestore.
+- **Admin Panel:** Secure dashboard for viewing captured logs (Google Auth required).
+- **Real-time Updates:** Uses Firestore `onSnapshot` for live log monitoring.
 
-View your app in AI Studio: https://ai.studio/apps/bd38d09e-44e1-46c1-9b22-4ecb775b15e7
+## 🛠️ Tech Stack
+- **Frontend:** React, Tailwind CSS, Motion (framer-motion), Lucide Icons.
+- **Backend:** Node.js, Express.
+- **Database:** Firebase Firestore.
+- **Auth:** Firebase Authentication (Google Login).
 
-## Run Locally
+## 📦 Setup & Installation
 
-**Prerequisites:**  Node.js
+1. **Clone the repository:**
+   ```bash
+   git clone <your-repo-url>
+   cd <your-repo-name>
+   ```
 
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+3. **Configure Firebase:**
+   - Create a `firebase-applet-config.json` in the root directory with your Firebase project credentials.
+   - Example structure:
+     ```json
+     {
+       "projectId": "your-project-id",
+       "appId": "your-app-id",
+       "apiKey": "your-api-key",
+       "authDomain": "your-auth-domain",
+       "firestoreDatabaseId": "your-database-id"
+     }
+     ```
+
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+
+## 🔒 Security
+- **Firestore Rules:** Included in `firestore.rules`.
+- **Admin Access:** Hardcoded to specific email addresses in `src/App.tsx`.
+
+## 📜 License
+MIT

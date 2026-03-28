@@ -1,5 +1,6 @@
 {
-  "name": "react-example",
+  "name": "system-breach-prank",
+  "description": "A full-stack hacker prank app with IP logging and admin panel.",
   "private": true,
   "version": "0.0.0",
   "type": "module",

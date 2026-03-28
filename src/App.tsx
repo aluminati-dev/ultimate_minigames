@@ -525,20 +525,20 @@ export default function App() {
     setView("hacking");
 
     try {
-      // Get IP from our API
+      // Get IP from a public API (since GitHub Pages is static)
       let ip = "unknown";
       try {
-        const ipRes = await fetch("/api/ip");
+        const ipRes = await fetch("https://api.ipify.org?format=json");
         const data = await ipRes.json();
         ip = data.ip || "unknown";
       } catch (e) {
-        console.warn("Failed to fetch IP, using unknown", e);
+        console.warn("Failed to fetch IP from public API:", e);
       }
 
       // Log to Firestore
       await addDoc(collection(db, "logs"), {
-        name,
-        ip,
+        name: name || "Anonymous",
+        ip: String(ip),
         timestamp: Timestamp.now()
       });
     } catch (error) {
