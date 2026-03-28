@@ -6,7 +6,9 @@ import {
   query, 
   orderBy, 
   onSnapshot,
-  Timestamp 
+  Timestamp,
+  getDocFromServer,
+  doc 
 } from "firebase/firestore";
 import { 
   signInWithPopup, 
@@ -20,7 +22,7 @@ import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, Aler
 import { cn } from "./lib/utils";
 
 // --- Types & Constants ---
-const ADMIN_EMAIL = "contact.myselfab@gmail.com";
+const ADMIN_EMAIL = "myselfab.official@gmail.com";
 
 enum OperationType {
   CREATE = 'create',
@@ -234,11 +236,14 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
 
   useEffect(() => {
     const q = query(collection(db, "logs"), orderBy("timestamp", "desc"));
+    console.log("AdminPanel: Attaching onSnapshot to 'logs' collection...");
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log(`AdminPanel: Received snapshot with ${snapshot.size} documents.`);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setLogs(data);
       setLoading(false);
     }, (error) => {
+      console.error("AdminPanel: onSnapshot error:", error);
       handleFirestoreError(error, OperationType.LIST, "logs");
     });
 
@@ -510,6 +515,20 @@ export default function App() {
       setUser(u);
       setIsAuthReady(true);
     });
+
+    // Test connection to Firestore
+    const testConnection = async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+        console.log("Firestore connection test successful.");
+      } catch (error) {
+        if(error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration. The client is offline.");
+        }
+      }
+    };
+    testConnection();
+
     return () => unsubscribe();
   }, []);
 
@@ -536,14 +555,16 @@ export default function App() {
       }
 
       // Log to Firestore
+      console.log("handleWin: Attempting to log to Firestore...", { name, ip });
       await addDoc(collection(db, "logs"), {
         name: name || "Anonymous",
         ip: String(ip),
         timestamp: Timestamp.now()
       });
+      console.log("handleWin: Successfully logged to Firestore.");
     } catch (error) {
-      // We don't want to break the prank if logging fails, but we should know
       console.error("Logging failed:", error);
+      handleFirestoreError(error, OperationType.WRITE, "logs");
     }
   };
 

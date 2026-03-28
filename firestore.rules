@@ -21,7 +21,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && 
-        (request.auth.token.email == "contact.myselfab@gmail.com" && request.auth.token.email_verified == true);
+        (request.auth.token.email == "myselfab.official@gmail.com" && request.auth.token.email_verified == true);
     }
 
     function isValidLog(data) {
