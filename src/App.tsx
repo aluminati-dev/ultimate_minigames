@@ -189,7 +189,7 @@ const HackerEffect = ({ onComplete }: { onComplete: () => void }) => {
             key={i}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className={typeof line === 'string' && line.includes("GRANTED") ? "text-white font-bold" : ""}
+            className={typeof line === 'string' && line.includes("GRANTED") ? "text-red-500 font-bold" : ""}
           >
             {line}
           </motion.div>
@@ -398,7 +398,7 @@ const Minigame = ({ onWin }: { onWin: (name: string) => void }) => {
               </div>
               
               <h1 className="text-4xl font-black text-white mb-2 tracking-tighter italic uppercase">
-                Mega <span className="text-yellow-400">Play</span>
+                Ulti <span className="text-yellow-400">Play</span>
               </h1>
               <p className="text-purple-200 text-sm font-bold mb-8 uppercase tracking-widest">Enter your nickname to join!</p>
               
