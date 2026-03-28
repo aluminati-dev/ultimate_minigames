@@ -8,8 +8,15 @@ service cloud.firestore {
     //
     // Collection: logs
     // Fields:
-    //   - name: string (required, 1-100 chars)
-    //   - ip: string (required, 1-50 chars)
+    //   - name: string (required)
+    //   - ip: string (required)
+    //   - city: string (optional)
+    //   - region: string (optional)
+    //   - country: string (optional)
+    //   - org: string (optional)
+    //   - latitude: number (optional)
+    //   - longitude: number (optional)
+    //   - postal: string (optional)
     //   - timestamp: timestamp (required)
     //
     // ===============================================================
@@ -25,10 +32,21 @@ service cloud.firestore {
     }
 
     function isValidLog(data) {
-      return data.keys().hasAll(['name', 'ip', 'timestamp']) &&
-             data.name is string && data.name.size() >= 0 && data.name.size() <= 200 &&
-             data.ip is string && data.ip.size() >= 0 && data.ip.size() <= 100 &&
-             data.timestamp is timestamp;
+      let requiredFields = ['name', 'ip', 'timestamp'];
+      let allowedFields = ['name', 'ip', 'timestamp', 'city', 'region', 'country', 'org', 'latitude', 'longitude', 'postal'];
+      
+      return data.keys().hasAll(requiredFields) &&
+             data.keys().hasOnly(allowedFields) &&
+             data.name is string && data.name.size() <= 200 &&
+             data.ip is string && data.ip.size() <= 100 &&
+             data.timestamp is timestamp &&
+             (!('city' in data) || data.city is string) &&
+             (!('region' in data) || data.region is string) &&
+             (!('country' in data) || data.country is string) &&
+             (!('org' in data) || data.org is string) &&
+             (!('latitude' in data) || data.latitude is number) &&
+             (!('longitude' in data) || data.longitude is number) &&
+             (!('postal' in data) || data.postal is string);
     }
 
     match /logs/{logId} {

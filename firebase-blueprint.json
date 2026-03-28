@@ -13,6 +13,34 @@
           "type": "string",
           "description": "The IP address of the user."
         },
+        "city": {
+          "type": "string",
+          "description": "City of the user."
+        },
+        "region": {
+          "type": "string",
+          "description": "Region/State of the user."
+        },
+        "country": {
+          "type": "string",
+          "description": "Country of the user."
+        },
+        "org": {
+          "type": "string",
+          "description": "ISP or Organization of the user."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Latitude coordinate."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Longitude coordinate."
+        },
+        "postal": {
+          "type": "string",
+          "description": "Postal code."
+        },
         "timestamp": {
           "type": "string",
           "format": "date-time",

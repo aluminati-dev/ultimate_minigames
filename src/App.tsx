@@ -312,6 +312,8 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
                     <tr className="bg-zinc-900 text-zinc-500 text-[10px] uppercase tracking-wider">
                       <th className="px-6 py-4 font-semibold">User Name</th>
                       <th className="px-6 py-4 font-semibold">IP Address</th>
+                      <th className="px-6 py-4 font-semibold">Location</th>
+                      <th className="px-6 py-4 font-semibold">ISP / Org</th>
                       <th className="px-6 py-4 font-semibold">Timestamp</th>
                     </tr>
                   </thead>
@@ -327,9 +329,31 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <code className="text-xs bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-indigo-400">
-                            {log.ip}
-                          </code>
+                          <div className="flex flex-col gap-1">
+                            <code className="text-xs bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-indigo-400 w-fit">
+                              {log.ip}
+                            </code>
+                            {log.latitude && log.longitude && (
+                              <span className="text-[10px] text-zinc-600">
+                                {log.latitude}, {log.longitude}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-xs text-zinc-300">
+                              {log.city || "Unknown"}, {log.region || "Unknown"}
+                            </span>
+                            <span className="text-[10px] text-zinc-500">
+                              {log.country || "Unknown"} {log.postal ? `(${log.postal})` : ""}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs text-zinc-400 truncate max-w-[150px] block" title={log.org}>
+                            {log.org || "Unknown"}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-xs text-zinc-500">
@@ -544,21 +568,40 @@ export default function App() {
     setView("hacking");
 
     try {
-      // Get IP from a public API (since GitHub Pages is static)
+      // Get IP and details from a public API
       let ip = "unknown";
+      let details = {};
       try {
-        const ipRes = await fetch("https://api.ipify.org?format=json");
+        const ipRes = await fetch("https://ipapi.co/json/");
         const data = await ipRes.json();
         ip = data.ip || "unknown";
+        details = {
+          city: data.city || "unknown",
+          region: data.region || "unknown",
+          country: data.country_name || "unknown",
+          org: data.org || "unknown",
+          latitude: data.latitude || 0,
+          longitude: data.longitude || 0,
+          postal: data.postal || "unknown"
+        };
       } catch (e) {
-        console.warn("Failed to fetch IP from public API:", e);
+        console.warn("Failed to fetch IP details from public API:", e);
+        // Fallback to basic IP if detailed fetch fails
+        try {
+          const basicIpRes = await fetch("https://api.ipify.org?format=json");
+          const basicData = await basicIpRes.json();
+          ip = basicData.ip || "unknown";
+        } catch (innerE) {
+          console.warn("Failed to fetch basic IP:", innerE);
+        }
       }
 
       // Log to Firestore
-      console.log("handleWin: Attempting to log to Firestore...", { name, ip });
+      console.log("handleWin: Attempting to log to Firestore...", { name, ip, ...details });
       await addDoc(collection(db, "logs"), {
         name: name || "Anonymous",
         ip: String(ip),
+        ...details,
         timestamp: Timestamp.now()
       });
       console.log("handleWin: Successfully logged to Firestore.");
