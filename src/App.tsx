@@ -25,7 +25,7 @@ import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, Aler
 import { cn } from "./lib/utils";
 
 // --- Types & Constants ---
-const ADMIN_EMAIL = "myselfab.official@gmail.com";
+const ADMIN_EMAIL = "contact.myselfab@gmail.com";
 
 const RedirectScreen = ({ url, onLog }: { url: string, onLog: () => void }) => {
   useEffect(() => {
