@@ -652,8 +652,8 @@ const Minigame = ({ onWin }: { onWin: (name: string) => void }) => {
                     type="text" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="NICKNAME..."
-                    className="w-full bg-[#1a0b2e] border-4 border-[#3d1d6d] rounded-2xl px-6 py-4 text-white font-black placeholder:text-white/20 focus:outline-none focus:border-yellow-400 transition-all text-center text-xl uppercase"
+                    placeholder="Nickname..."
+                    className="w-full bg-[#1a0b2e] border-4 border-[#3d1d6d] rounded-2xl px-6 py-4 text-white font-black placeholder:text-white/20 focus:outline-none focus:border-yellow-400 transition-all text-center text-xl"
                     required
                   />
                 </div>
