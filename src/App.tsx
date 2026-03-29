@@ -944,7 +944,17 @@ export default function App() {
       console.log("Login successful for:", result.user.email);
     } catch (error: any) {
       console.error("Login failed:", error);
-      setLoginError(error.message || "Authentication failed. Please try again.");
+      let message = "Authentication failed. Please try again.";
+      if (error.code === 'auth/popup-blocked') {
+        message = "The login popup was blocked by your browser. Please allow popups for this site.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        message = `This domain (${window.location.hostname}) is not authorized in your Firebase Console. Please add it to 'Authorized domains' in the Authentication settings.`;
+      } else if (error.code === 'auth/operation-not-allowed') {
+        message = "Google Sign-In is not enabled in your Firebase project. Please enable it in the Authentication > Sign-in method tab.";
+      } else if (error.message) {
+        message = error.message;
+      }
+      setLoginError(message);
     }
   };
 
