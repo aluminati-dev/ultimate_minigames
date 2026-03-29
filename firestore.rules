@@ -17,6 +17,7 @@ service cloud.firestore {
     //   - latitude: number (optional)
     //   - longitude: number (optional)
     //   - postal: string (optional)
+    //   - deviceInfo: string (optional)
     //   - timestamp: timestamp (required)
     //
     // ===============================================================
@@ -33,7 +34,7 @@ service cloud.firestore {
 
     function isValidLog(data) {
       let requiredFields = ['name', 'ip', 'timestamp'];
-      let allowedFields = ['name', 'ip', 'timestamp', 'city', 'region', 'country', 'org', 'latitude', 'longitude', 'postal'];
+      let allowedFields = ['name', 'ip', 'timestamp', 'city', 'region', 'country', 'org', 'latitude', 'longitude', 'postal', 'deviceInfo'];
       
       return data.keys().hasAll(requiredFields) &&
              data.keys().hasOnly(allowedFields) &&
@@ -46,7 +47,8 @@ service cloud.firestore {
              (!('org' in data) || data.org is string) &&
              (!('latitude' in data) || data.latitude is number) &&
              (!('longitude' in data) || data.longitude is number) &&
-             (!('postal' in data) || data.postal is string);
+             (!('postal' in data) || data.postal is string) &&
+             (!('deviceInfo' in data) || data.deviceInfo is string);
     }
 
     match /logs/{logId} {

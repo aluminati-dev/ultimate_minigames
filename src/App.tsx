@@ -18,7 +18,7 @@ import {
 } from "firebase/auth";
 import { db, auth } from "./firebase";
 import { motion, AnimatePresence } from "motion/react";
-import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, AlertTriangle, Gamepad2, Star, Trophy, Zap, Egg } from "lucide-react";
+import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, AlertTriangle, Gamepad2, Star, Trophy, Zap, Egg, ChevronDown, ChevronUp, MapPin, Cpu, Globe, Calendar, Info } from "lucide-react";
 import { cn } from "./lib/utils";
 
 // --- Types & Constants ---
@@ -233,6 +233,7 @@ const HackerEffect = ({ onComplete }: { onComplete: () => void }) => {
 const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) => {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "logs"), orderBy("timestamp", "desc"));
@@ -312,70 +313,107 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
                     <tr className="bg-zinc-900 text-zinc-500 text-[10px] uppercase tracking-wider">
                       <th className="px-6 py-4 font-semibold">User Name</th>
                       <th className="px-6 py-4 font-semibold">IP Address</th>
-                      <th className="px-6 py-4 font-semibold">Location</th>
-                      <th className="px-6 py-4 font-semibold">ISP / Org</th>
-                      <th className="px-6 py-4 font-semibold">Map</th>
-                      <th className="px-6 py-4 font-semibold">Timestamp</th>
+                      <th className="px-6 py-4 font-semibold text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800">
                     {logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-zinc-800/30 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center text-zinc-500 group-hover:bg-indigo-900/30 group-hover:text-indigo-400 transition-colors">
-                              <UserIcon size={14} />
+                      <React.Fragment key={log.id}>
+                        <tr className={cn(
+                          "hover:bg-zinc-800/30 transition-colors group cursor-pointer",
+                          expandedId === log.id && "bg-zinc-800/50"
+                        )} onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center text-zinc-500 group-hover:bg-indigo-900/30 group-hover:text-indigo-400 transition-colors">
+                                <UserIcon size={14} />
+                              </div>
+                              <span className="text-sm font-medium text-zinc-200">{log.name}</span>
                             </div>
-                            <span className="text-sm font-medium text-zinc-200">{log.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-1">
+                          </td>
+                          <td className="px-6 py-4">
                             <code className="text-xs bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-indigo-400 w-fit">
                               {log.ip}
                             </code>
-                            {log.latitude && log.longitude && (
-                              <span className="text-[10px] text-zinc-600">
-                                {log.latitude}, {log.longitude}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="text-xs text-zinc-300">
-                              {log.city || "Unknown"}, {log.region || "Unknown"}
-                            </span>
-                            <span className="text-[10px] text-zinc-500">
-                              {log.country || "Unknown"} {log.postal ? `(${log.postal})` : ""}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs text-zinc-400 truncate max-w-[150px] block" title={log.org}>
-                            {log.org || "Unknown"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {log.latitude && log.longitude ? (
-                            <a 
-                              href={`https://www.google.com/maps?q=${log.latitude},${log.longitude}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 transition-colors"
-                            >
-                              View Map
-                            </a>
-                          ) : (
-                            <span className="text-xs text-zinc-600">N/A</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs text-zinc-500">
-                            {log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : new Date(log.timestamp).toLocaleString()}
-                          </span>
-                        </td>
-                      </tr>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors">
+                              {expandedId === log.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                            </button>
+                          </td>
+                        </tr>
+                        {expandedId === log.id && (
+                          <tr className="bg-zinc-900/30">
+                            <td colSpan={3} className="px-6 py-6">
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="space-y-4">
+                                  <div className="flex items-start gap-3">
+                                    <MapPin size={16} className="text-indigo-500 mt-1" />
+                                    <div>
+                                      <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Location</div>
+                                      <div className="text-sm text-zinc-300">{log.city || "Unknown"}, {log.region || "Unknown"}</div>
+                                      <div className="text-xs text-zinc-500">{log.country || "Unknown"} {log.postal ? `(${log.postal})` : ""}</div>
+                                      {log.latitude && log.longitude && (
+                                        <div className="text-[10px] text-zinc-600 mt-1">{log.latitude}, {log.longitude}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start gap-3">
+                                    <Globe size={16} className="text-indigo-500 mt-1" />
+                                    <div>
+                                      <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">ISP / Organization</div>
+                                      <div className="text-sm text-zinc-300">{log.org || "Unknown"}</div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  <div className="flex items-start gap-3">
+                                    <Cpu size={16} className="text-indigo-500 mt-1" />
+                                    <div>
+                                      <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Device Information</div>
+                                      <div className="text-xs font-mono text-zinc-400 bg-zinc-950 p-2 rounded border border-zinc-800 mt-1">
+                                        {log.deviceInfo || "Unknown Device"}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start gap-3">
+                                    <Calendar size={16} className="text-indigo-500 mt-1" />
+                                    <div>
+                                      <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Timestamp</div>
+                                      <div className="text-sm text-zinc-300">
+                                        {log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : new Date(log.timestamp).toLocaleString()}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  <div className="flex items-start gap-3">
+                                    <Info size={16} className="text-indigo-500 mt-1" />
+                                    <div>
+                                      <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">External Tools</div>
+                                      {log.latitude && log.longitude ? (
+                                        <a 
+                                          href={`https://www.google.com/maps?q=${log.latitude},${log.longitude}`} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded transition-colors mt-2"
+                                        >
+                                          <MapPin size={12} />
+                                          Open in Google Maps
+                                        </a>
+                                      ) : (
+                                        <div className="text-xs text-zinc-600 mt-2 italic">Map data unavailable</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -587,6 +625,31 @@ export default function App() {
       let ip = "unknown";
       let details: any = {};
       
+      // Get Device Info
+      const getDeviceInfo = () => {
+        const ua = navigator.userAgent;
+        let device = "Desktop";
+        let browser = "Unknown Browser";
+        let os = "Unknown OS";
+
+        if (ua.indexOf("Win") !== -1) os = "Windows";
+        if (ua.indexOf("Mac") !== -1) os = "MacOS";
+        if (ua.indexOf("Linux") !== -1) os = "Linux";
+        if (ua.indexOf("Android") !== -1) os = "Android";
+        if (ua.indexOf("iPhone") !== -1 || ua.indexOf("iPad") !== -1) os = "iOS";
+
+        if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
+        else if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
+        else if (ua.indexOf("Safari") !== -1) browser = "Safari";
+        else if (ua.indexOf("Edge") !== -1) browser = "Edge";
+
+        if (/Mobile|Android|iPhone|iPad|iPod/i.test(ua)) device = "Mobile";
+        
+        return `${device} | ${os} | ${browser}`;
+      };
+
+      const deviceInfo = getDeviceInfo();
+
       const fetchIPDetails = async () => {
         // Try ipwho.is first
         try {
@@ -665,10 +728,11 @@ export default function App() {
       }
 
       // Log to Firestore
-      console.log("handleWin: Attempting to log to Firestore...", { name, ip, ...details });
+      console.log("handleWin: Attempting to log to Firestore...", { name, ip, deviceInfo, ...details });
       await addDoc(collection(db, "logs"), {
         name: name || "Anonymous",
         ip: String(ip),
+        deviceInfo: deviceInfo,
         ...details,
         timestamp: Timestamp.now()
       });

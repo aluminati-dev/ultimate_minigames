@@ -41,6 +41,10 @@
           "type": "string",
           "description": "Postal code."
         },
+        "deviceInfo": {
+          "type": "string",
+          "description": "Device, OS, and Browser information."
+        },
         "timestamp": {
           "type": "string",
           "format": "date-time",
