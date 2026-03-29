@@ -894,9 +894,11 @@ export default function App() {
   }, []);
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
+      console.log("Auth State Changed: ", u?.email);
       setUser(u);
       setIsAuthReady(true);
     });
@@ -931,11 +933,18 @@ export default function App() {
   };
 
   const handleAdminLogin = async () => {
+    setLoginError(null);
     const provider = new GoogleAuthProvider();
+    // Force account selection to avoid auto-login with wrong account
+    provider.setCustomParameters({ prompt: 'select_account' });
+    
     try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
+      console.log("Attempting Google Login...");
+      const result = await signInWithPopup(auth, provider);
+      console.log("Login successful for:", result.user.email);
+    } catch (error: any) {
       console.error("Login failed:", error);
+      setLoginError(error.message || "Authentication failed. Please try again.");
     }
   };
 
@@ -956,6 +965,13 @@ export default function App() {
             <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-zinc-950 font-mono">
               <Lock size={48} className="mb-6 text-indigo-500" />
               <h1 className="text-2xl font-bold text-white mb-8">ADMIN AUTHENTICATION</h1>
+              
+              {loginError && (
+                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-xs max-w-xs text-center">
+                  {loginError}
+                </div>
+              )}
+
               <button 
                 onClick={handleAdminLogin}
                 className="flex items-center gap-3 px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors"
