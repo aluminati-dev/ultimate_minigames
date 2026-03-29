@@ -29,7 +29,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && 
-        (request.auth.token.email == "myselfab.official@gmail.com" && request.auth.token.email_verified == true);
+        (request.auth.token.email == "contact.myselfab@gmail.com" && request.auth.token.email_verified == true);
     }
 
     function isValidLog(data) {
@@ -60,6 +60,14 @@ service cloud.firestore {
       
       // No updates or deletes allowed
       allow update, delete: if false;
+    }
+
+    match /config/global {
+      // Anyone can read the config to know if they should be redirected
+      allow read: if true;
+      
+      // Only admin can update the config
+      allow write: if isAdmin();
     }
 
     // Default deny

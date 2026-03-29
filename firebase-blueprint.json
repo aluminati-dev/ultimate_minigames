@@ -52,12 +52,32 @@
         }
       },
       "required": ["name", "ip", "timestamp"]
+    },
+    "config": {
+      "title": "Global Config",
+      "description": "Global application configuration.",
+      "type": "object",
+      "properties": {
+        "prankModeEnabled": {
+          "type": "boolean",
+          "description": "Whether the prank mode is active."
+        },
+        "redirectUrl": {
+          "type": "string",
+          "description": "The URL to redirect to when prank mode is disabled."
+        }
+      },
+      "required": ["prankModeEnabled", "redirectUrl"]
     }
   },
   "firestore": {
     "/logs/{logId}": {
       "schema": "log",
       "description": "Collection of user IP logs."
+    },
+    "/config/global": {
+      "schema": "config",
+      "description": "Global configuration document."
     }
   }
 }
