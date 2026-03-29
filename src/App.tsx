@@ -10,7 +10,8 @@ import {
   getDocFromServer,
   doc,
   setDoc,
-  updateDoc
+  updateDoc,
+  deleteDoc
 } from "firebase/firestore";
 import { 
   signInWithPopup, 
@@ -20,7 +21,7 @@ import {
 } from "firebase/auth";
 import { db, auth } from "./firebase";
 import { motion, AnimatePresence } from "motion/react";
-import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, AlertTriangle, Gamepad2, Star, Trophy, Zap, Egg, ChevronDown, ChevronUp, MapPin, Cpu, Globe, Calendar, Info, ToggleLeft, ToggleRight, ExternalLink, Power, RefreshCcw } from "lucide-react";
+import { Terminal, Shield, Ghost, Lock, User as UserIcon, LogOut, Database, AlertTriangle, Gamepad2, Star, Trophy, Zap, Egg, ChevronDown, ChevronUp, MapPin, Cpu, Globe, Calendar, Info, ToggleLeft, ToggleRight, ExternalLink, Power, RefreshCcw, Trash2 } from "lucide-react";
 import { cn } from "./lib/utils";
 
 // --- Types & Constants ---
@@ -345,6 +346,16 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
     }
   };
 
+  const deleteLog = async (logId: string) => {
+    if (!window.confirm("Are you sure you want to delete this log?")) return;
+    try {
+      await deleteDoc(doc(db, "logs", logId));
+    } catch (error) {
+      console.error("Error deleting log:", error);
+      alert("Failed to delete log. Check console for details.");
+    }
+  };
+
   if (user.email !== ADMIN_EMAIL) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-400 flex flex-col items-center justify-center p-8 font-mono">
@@ -451,7 +462,7 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
                     <tr className="bg-zinc-900 text-zinc-500 text-[10px] uppercase tracking-wider">
                       <th className="px-6 py-4 font-semibold">User Name</th>
                       <th className="px-6 py-4 font-semibold">IP Address</th>
-                      <th className="px-6 py-4 font-semibold text-right">Action</th>
+                      <th className="px-6 py-4 font-semibold text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800">
@@ -460,8 +471,8 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
                         <tr className={cn(
                           "hover:bg-zinc-800/30 transition-colors group cursor-pointer",
                           expandedId === log.id && "bg-zinc-800/50"
-                        )} onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
-                          <td className="px-6 py-4">
+                        )}>
+                          <td className="px-6 py-4" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center text-zinc-500 group-hover:bg-indigo-900/30 group-hover:text-indigo-400 transition-colors">
                                 <UserIcon size={14} />
@@ -469,15 +480,33 @@ const AdminPanel = ({ user, onLogout }: { user: User, onLogout: () => void }) =>
                               <span className="text-sm font-medium text-zinc-200">{log.name}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
                             <code className="text-xs bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-indigo-400 w-fit">
                               {log.ip}
                             </code>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors">
-                              {expandedId === log.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteLog(log.id);
+                                }}
+                                className="p-2 hover:bg-red-500/10 text-zinc-500 hover:text-red-500 rounded-lg transition-colors"
+                                title="Delete Log"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedId(expandedId === log.id ? null : log.id);
+                                }}
+                                className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
+                              >
+                                {expandedId === log.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                         {expandedId === log.id && (

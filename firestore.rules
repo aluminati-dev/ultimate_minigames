@@ -55,11 +55,11 @@ service cloud.firestore {
       // Anyone can create a log (unauthenticated is allowed for the prank)
       allow create: if isValidLog(request.resource.data);
       
-      // Only admin can read logs
-      allow read: if isAdmin();
+      // Only admin can read and delete logs
+      allow read, delete: if isAdmin();
       
-      // No updates or deletes allowed
-      allow update, delete: if false;
+      // No updates allowed
+      allow update: if false;
     }
 
     match /config/global {
